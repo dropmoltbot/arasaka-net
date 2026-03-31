@@ -36,10 +36,12 @@ export class CityGrid {
   private scene: BabylonScene;
   private glow: GlowLayer;
   private onClick: (meshName: string) => void;
+  private onHover: () => void;
   private nodes: NodeMesh[] = [];
   private lines: LinesMesh[] = [];
   private gridOffset = 0;
   private spawnedNodeIds = new Set<string>();
+  private hoveredNodeId: string | null = null;
 
   // Base node mesh for instancing
   private baseNode: Mesh | null = null;
@@ -53,11 +55,13 @@ export class CityGrid {
   constructor(
     scene: BabylonScene,
     glow: GlowLayer,
-    onClick: (meshName: string) => void
+    onClick: (meshName: string) => void,
+    onHover: () => void
   ) {
     this.scene = scene;
     this.glow = glow;
     this.onClick = onClick;
+    this.onHover = onHover;
     this.initBaseAssets();
     this.spawnInitialGrid();
     this.setupClickHandler();
@@ -217,9 +221,10 @@ export class CityGrid {
   }
 
   private setupClickHandler() {
+    // Track hover state
     this.scene.onPointerObservable.add((pointerInfo) => {
       if (pointerInfo.type === 1) {
-        // POINTERPICK
+        // POINTERPICK — click
         const pickResult = this.scene.pick(
           this.scene.pointerX,
           this.scene.pointerY
@@ -230,8 +235,50 @@ export class CityGrid {
             this.onClick(name);
           }
         }
+      } else if (pointerInfo.type === 4) {
+        // POINTERMOVE — hover
+        const pickResult = this.scene.pick(
+          this.scene.pointerX,
+          this.scene.pointerY
+        );
+        const hoveredName = pickResult?.hit && pickResult.pickedMesh
+          ? pickResult.pickedMesh.name
+          : null;
+        const newHoveredId = hoveredName?.startsWith("node_") ? hoveredName : null;
+
+        if (newHoveredId !== this.hoveredNodeId) {
+          // Clear previous hover
+          if (this.hoveredNodeId) {
+            const prevNode = this.nodes.find((n) => n.nodeId === this.hoveredNodeId);
+            if (prevNode) {
+              this.setNodeHoverState(prevNode, false);
+            }
+          }
+
+          // Apply new hover
+          if (newHoveredId) {
+            const node = this.nodes.find((n) => n.nodeId === newHoveredId);
+            if (node) {
+              this.setNodeHoverState(node, true);
+            }
+          }
+
+          this.hoveredNodeId = newHoveredId;
+        }
       }
     });
+  }
+
+  private setNodeHoverState(node: NodeMesh, isHovered: boolean) {
+    if (node.mesh.material) {
+      (node.mesh.material as StandardMaterial).emissiveColor = isHovered
+        ? new Color3(1, 0, 0.43) as unknown as Color3
+        : new Color3(0, 0.96, 1) as unknown as Color3;
+    }
+    node.light.intensity = isHovered ? 1.5 : 0.3;
+    if (isHovered) {
+      this.onHover();
+    }
   }
 
   update(cameraZ: number) {

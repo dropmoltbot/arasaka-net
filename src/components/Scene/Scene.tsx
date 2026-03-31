@@ -15,7 +15,7 @@ import {
   DefaultRenderingPipeline,
 } from "@babylonjs/core";
 import { CityGrid } from "./CityGrid";
-import { COLORS, SCENE } from "@/lib/constants";
+import { COLORS, SCENE, SHADER } from "@/lib/constants";
 
 interface SceneProps {
   onNodeClick: (data: {
@@ -48,6 +48,12 @@ export default function BabylonScene({
   const handleWheel = useCallback((e: WheelEvent) => {
     e.preventDefault();
     targetZRef.current += e.deltaY * SCENE.scrollSensitivity;
+  }, []);
+
+  const handleGlitchTrigger = useCallback(() => {
+    const scene = sceneRef.current;
+    if (!scene) return;
+    (scene as any)._glitchState = { active: true, startTime: Date.now() };
   }, []);
 
   const handleClick = useCallback(
@@ -129,7 +135,7 @@ export default function BabylonScene({
     pipeline.grain.animated = true;
 
     // City Grid
-    const cityGrid = new CityGrid(scene, glow, handleClick);
+    const cityGrid = new CityGrid(scene, glow, handleClick, handleGlitchTrigger);
     cityGridRef.current = cityGrid;
 
     // Wheel event
@@ -154,6 +160,27 @@ export default function BabylonScene({
 
       // Update grid
       cityGrid.update(currentZRef.current);
+
+      // Handle glitch effect on hover
+      const glitchState = (scene as any)._glitchState;
+      if (glitchState?.active) {
+        const elapsed = Date.now() - glitchState.startTime;
+        if (elapsed < SHADER.glitchDuration) {
+          const progress = elapsed / SHADER.glitchDuration;
+          const intensity = Math.sin(progress * Math.PI) * SHADER.chromaticOffset;
+          pipeline.chromaticAberrationEnabled = true;
+          pipeline.chromaticAberration.aberrationAmount = intensity;
+          pipeline.grainEnabled = true;
+          pipeline.grain.intensity = 15 + Math.random() * 10;
+        } else {
+          pipeline.chromaticAberration.aberrationAmount = 0;
+          pipeline.grain.intensity = 0;
+          glitchState.active = false;
+        }
+      } else {
+        pipeline.chromaticAberration.aberrationAmount = 0;
+        pipeline.grain.intensity = 0;
+      }
     });
 
     // Resize
