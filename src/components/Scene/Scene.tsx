@@ -1,0 +1,189 @@
+"use client";
+
+import { useEffect, useRef, useCallback } from "react";
+import {
+  Engine,
+  Scene,
+  UniversalCamera,
+  Vector3,
+  Color3,
+  Color4,
+  GlowLayer,
+  HemisphericLight,
+  MeshBuilder,
+  StandardMaterial,
+  DefaultRenderingPipeline,
+} from "@babylonjs/core";
+import { CityGrid } from "./CityGrid";
+import { COLORS, SCENE } from "@/lib/constants";
+
+interface SceneProps {
+  onNodeClick: (data: {
+    nodeId: string;
+    sector: string;
+    security: string;
+    status: string;
+    uptime: string;
+    packet: string;
+    timestamp: string;
+  }) => void;
+  onCameraZChange: (z: number) => void;
+  onReady: () => void;
+}
+
+export default function BabylonScene({
+  onNodeClick,
+  onCameraZChange,
+  onReady,
+}: SceneProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const engineRef = useRef<Engine | null>(null);
+  const sceneRef = useRef<Scene | null>(null);
+  const cameraRef = useRef<UniversalCamera | null>(null);
+  const cityGridRef = useRef<CityGrid | null>(null);
+  const targetZRef = useRef(0);
+  const currentZRef = useRef(0);
+  const isReadyRef = useRef(false);
+
+  const handleWheel = useCallback((e: WheelEvent) => {
+    e.preventDefault();
+    targetZRef.current += e.deltaY * SCENE.scrollSensitivity;
+  }, []);
+
+  const handleClick = useCallback(
+    (meshName: string) => {
+      if (!isReadyRef.current) return;
+      const nodeData = cityGridRef.current?.getNodeData(meshName);
+      if (nodeData) {
+        onNodeClick(nodeData);
+      }
+    },
+    [onNodeClick]
+  );
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const engine = new Engine(canvas, true, {
+      preserveDrawingBuffer: true,
+      stencil: true,
+    });
+    engineRef.current = engine;
+
+    const scene = new Scene(engine);
+    scene.clearColor = new Color4(
+      0.02,
+      0.02,
+      0.03,
+      1
+    ) as unknown as Color4;
+    sceneRef.current = scene;
+
+    // Camera — locked to Z-axis dolly only
+    const camera = new UniversalCamera(
+      "camera",
+      new Vector3(0, 2, 20),
+      scene
+    );
+    camera.setTarget(new Vector3(0, 2, 0));
+    camera.minZ = 0.1;
+    camera.maxZ = 500;
+    // Disable all default camera controls
+    camera.inputs.clear();
+    cameraRef.current = camera;
+
+    // Lighting
+    const hemi = new HemisphericLight(
+      "hemi",
+      new Vector3(0, 1, 0),
+      scene
+    );
+    hemi.intensity = 0.15;
+    hemi.diffuse = new Color3(0.1, 0.1, 0.15) as unknown as import("@babylonjs/core").Color3;
+    hemi.groundColor = new Color3(0.02, 0.02, 0.05) as unknown as import("@babylonjs/core").Color3;
+
+    // Glow layer
+    const glow = new GlowLayer("glow", scene);
+    glow.intensity = SCENE.glowIntensity;
+    glow.blurKernelSize = SCENE.glowKernel;
+
+    // Post-processing pipeline
+    const pipeline = new DefaultRenderingPipeline(
+      "pipeline",
+      true,
+      scene,
+      [camera]
+    );
+    pipeline.bloomEnabled = true;
+    pipeline.bloomThreshold = 0.3;
+    pipeline.bloomWeight = 0.8;
+    pipeline.bloomKernel = 64;
+    pipeline.bloomScale = 0.5;
+
+    // Chromatic aberration on the pipeline for glitch effect
+    pipeline.chromaticAberrationEnabled = true;
+    pipeline.chromaticAberration.aberrationAmount = 0;
+    pipeline.grainEnabled = true;
+    pipeline.grain.intensity = 0;
+    pipeline.grain.animated = true;
+
+    // City Grid
+    const cityGrid = new CityGrid(scene, glow, handleClick);
+    cityGridRef.current = cityGrid;
+
+    // Wheel event
+    canvas.addEventListener("wheel", handleWheel, { passive: false });
+
+    // Animation loop
+    let lastTime = performance.now();
+    scene.registerBeforeRender(() => {
+      const now = performance.now();
+      const dt = (now - lastTime) / 1000;
+      lastTime = now;
+
+      // Smooth camera dolly
+      const diff = targetZRef.current - currentZRef.current;
+      const speed = Math.min(Math.abs(diff) * 5, SCENE.maxScrollSpeed);
+      if (Math.abs(diff) > 0.01) {
+        currentZRef.current += Math.sign(diff) * speed * dt;
+        camera.position.z = currentZRef.current + 20;
+        camera.target.z = currentZRef.current;
+        onCameraZChange(currentZRef.current);
+      }
+
+      // Update grid
+      cityGrid.update(currentZRef.current);
+    });
+
+    // Resize
+    const handleResize = () => engine.resize();
+    window.addEventListener("resize", handleResize);
+
+    // Start render loop
+    engine.runRenderLoop(() => scene.render());
+
+    isReadyRef.current = true;
+    setTimeout(() => onReady(), 100);
+
+    return () => {
+      canvas.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("resize", handleResize);
+      engine.stopRenderLoop();
+      scene.dispose();
+      engine.dispose();
+    };
+  }, [handleWheel, handleClick, onNodeClick, onCameraZChange, onReady]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "block",
+        outline: "none",
+      }}
+    />
+  );
+}

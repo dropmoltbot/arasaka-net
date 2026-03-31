@@ -1,0 +1,38 @@
+.hud {
+  position: absolute;
+  bottom: var(--space-4);
+  left: var(--space-4);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--neon-cyan);
+  opacity: 0.5;
+  pointer-events: none;
+  transition: opacity 300ms;
+}
+
+.hud:hover {
+  opacity: 1;
+}
+
+.label {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  opacity: 0.6;
+}
+
+.coord {
+  letter-spacing: 0.1em;
+}
+
+.sep {
+  opacity: 0.4;
+}
+
+.zCoord {
+  color: var(--neon-cyan);
+  text-shadow: 0 0 8px var(--neon-cyan);
+}

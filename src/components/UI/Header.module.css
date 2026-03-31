@@ -1,0 +1,74 @@
+.header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  pointer-events: none;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.15em;
+}
+
+.logoBracket {
+  color: var(--neon-cyan);
+  opacity: 0.6;
+}
+
+.logoText {
+  color: var(--text-primary);
+  margin: 0 4px;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dotGreen {
+  background: #00ff88;
+  box-shadow: 0 0 8px #00ff88;
+  animation: pulseDot 2s ease-in-out infinite;
+}
+
+.dotAmber {
+  background: var(--neon-amber);
+  box-shadow: 0 0 8px var(--neon-amber);
+  animation: pulseDot 0.8s ease-in-out infinite;
+}
+
+@keyframes pulseDot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.statusText {
+  text-transform: uppercase;
+}
