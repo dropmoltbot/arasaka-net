@@ -5,7 +5,7 @@
   inset: 0;
   z-index: 30;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
   padding: var(--space-4);
   background: rgba(5, 5, 8, 0.75);

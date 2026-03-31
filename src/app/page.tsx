@@ -15,8 +15,12 @@ const Scene = dynamic(() => import("@/components/Scene/Scene"), {
   ssr: false,
   loading: () => (
     <div className={styles.loading}>
-      <span className={styles.loadingText}>INITIALIZING</span>
-      <span className={styles.loadingCursor}>_</span>
+      <div className={styles.loadingTerminal}>
+        <span className={styles.loadingLine}>ARASAKA-NET TERMINAL v2.0</span>
+        <span className={styles.loadingLine}>Connecting to mainframe...</span>
+        <span className={styles.loadingLine}>BYPASS ACTIVE</span>
+        <span className={styles.loadingCursor}>_</span>
+      </div>
     </div>
   ),
 });
@@ -32,7 +36,7 @@ interface NodeData {
 }
 
 export default function HomePage() {
-  const [terminalOpen, setTerminalOpen] = useState(false);
+  const [terminalOpen, setTerminalOpen] = useState(true); // Terminal open by default
   const [selectedNode, setSelectedNode] = useState<NodeData | null>(null);
   const [cameraZ, setCameraZ] = useState(0);
   const [sceneReady, setSceneReady] = useState(false);
