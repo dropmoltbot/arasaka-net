@@ -15,6 +15,12 @@ export default function Header({ ready }: HeaderProps) {
         <span className={styles.logoBracket}>]</span>
       </div>
       <div className={styles.status}>
+        <div className={styles.signalBars}>
+          <span className={`${styles.signalBar} ${styles.bar1}`} />
+          <span className={`${styles.signalBar} ${styles.bar2}`} />
+          <span className={`${styles.signalBar} ${styles.bar3}`} />
+          <span className={`${styles.signalBar} ${styles.bar4}`} />
+        </div>
         <span
           className={`${styles.statusDot} ${ready ? styles.dotGreen : styles.dotAmber}`}
         />

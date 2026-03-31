@@ -7,6 +7,7 @@ export const COLORS = {
   gridLine: "#1a1a2e",
   textPrimary: "#e0e0e0",
   textMuted: "#4a4a5a",
+  neonPurple: "#bf5af2",
 } as const;
 
 export const GRID = {

@@ -51,8 +51,10 @@ export default function BabylonScene({
   // Audio refs
   const audioRef = useRef<{
     ctx: AudioContext;
-    drone: OscillatorNode;
-    lfo: OscillatorNode;
+    drone1: OscillatorNode;
+    drone2: OscillatorNode;
+    lfo1: OscillatorNode;
+    lfo2: OscillatorNode;
     masterGain: GainNode;
     filter: BiquadFilterNode;
   } | null>(null);
@@ -82,7 +84,7 @@ export default function BabylonScene({
 
   const handleDronePitch = useCallback((pitch: number) => {
     if (audioRef.current) {
-      audioRef.current.drone.frequency.setTargetAtTime(pitch, audioRef.current.ctx.currentTime, 0.1);
+      audioRef.current.drone1.frequency.setTargetAtTime(pitch, audioRef.current.ctx.currentTime, 0.1);
     }
   }, []);
 
@@ -163,30 +165,56 @@ export default function BabylonScene({
     const startAudio = () => {
       try {
         const ctx = new AudioContext();
-        const drone = ctx.createOscillator();
-        const lfo = ctx.createOscillator();
-        const lfoGain = ctx.createGain();
+        const drone1 = ctx.createOscillator();
+        const lfo1 = ctx.createOscillator();
+        const lfoGain1 = ctx.createGain();
+        const drone2 = ctx.createOscillator();
+        const lfo2 = ctx.createOscillator();
+        const lfoGain2 = ctx.createGain();
         const filter = ctx.createBiquadFilter();
         const masterGain = ctx.createGain();
 
-        drone.type = "sawtooth";
-        drone.frequency.value = 55;
-        lfo.type = "sine";
-        lfo.frequency.value = 0.15;
-        lfoGain.gain.value = 8;
+        drone1.type = "sawtooth";
+        drone1.frequency.value = 55;
+        lfo1.type = "sine";
+        lfo1.frequency.value = 0.15;
+        lfoGain1.gain.value = 8;
+        drone2.type = "sawtooth";
+        drone2.frequency.value = 110;
+        lfo2.type = "sine";
+        lfo2.frequency.value = 0.3;
+        lfoGain2.gain.value = 5;
         filter.type = "lowpass";
         filter.frequency.value = 280;
         masterGain.gain.value = 0.04;
 
-        lfo.connect(lfoGain);
-        lfoGain.connect(drone.frequency);
-        drone.connect(filter);
+        lfo1.connect(lfoGain1);
+        lfoGain1.connect(drone1.frequency);
+        drone1.connect(filter);
+        lfo2.connect(lfoGain2);
+        lfoGain2.connect(drone2.frequency);
+        drone2.connect(filter);
         filter.connect(masterGain);
         masterGain.connect(ctx.destination);
 
-        drone.start();
-        lfo.start();
-        audioRef.current = { ctx, drone, lfo, masterGain, filter };
+        drone1.start();
+        lfo1.start();
+        drone2.start();
+        lfo2.start();
+        audioRef.current = { ctx, drone1, drone2, lfo1, lfo2, masterGain, filter };
+
+        // Attack-wave intensity ramp
+        const rampUp = () => {
+          if (!audioRef.current) return;
+          const now = ctx.currentTime;
+          masterGain.gain.setTargetAtTime(0.06, now, 0.05);
+          setTimeout(() => {
+            if (audioRef.current) {
+              masterGain.gain.setTargetAtTime(0.04, ctx.currentTime, 0.3);
+            }
+          }, 800);
+        };
+        window.addEventListener("attack-wave", rampUp);
       } catch {
         // Audio blocked
       }
@@ -235,8 +263,10 @@ export default function BabylonScene({
       engine.dispose();
       if (audioRef.current) {
         try {
-          audioRef.current.drone.stop();
-          audioRef.current.lfo.stop();
+          audioRef.current.drone1.stop();
+          audioRef.current.drone2.stop();
+          audioRef.current.lfo1.stop();
+          audioRef.current.lfo2.stop();
           audioRef.current.ctx.close();
         } catch { /* already gone */ }
         audioRef.current = null;
