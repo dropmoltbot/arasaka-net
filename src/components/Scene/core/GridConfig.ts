@@ -1,4 +1,4 @@
-import { COLORS } from "./constants";
+import { COLORS } from "@/lib/constants";
 
 export const NEON = {
   cyan: [0, 0.96, 1] as [number, number, number],
