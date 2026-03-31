@@ -1,0 +1,126 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: #050508;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 245, 255, 0.03) 2px,
+    rgba(0, 245, 255, 0.03) 4px
+  );
+  pointer-events: none;
+  animation: flicker 0.15s infinite;
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+.content {
+  text-align: center;
+  color: #00f5ff;
+  font-family: "Courier New", Courier, monospace;
+}
+
+.glitch {
+  font-size: clamp(2rem, 8vw, 5rem);
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: #ff006e;
+  text-shadow:
+    0.05em 0 0 rgba(0, 245, 255, 0.75),
+    -0.05em -0.025em 0 rgba(255, 0, 110, 0.75),
+    0.025em 0.05em 0 rgba(0, 245, 255, 0.5);
+  animation: glitch 1s infinite;
+  position: relative;
+}
+
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.glitch::before {
+  color: #00f5ff;
+  animation: glitch-top 0.8s infinite;
+  clip-path: polygon(0 0, 100% 0, 100% 33%, 0 33%);
+}
+
+.glitch::after {
+  color: #ff006e;
+  animation: glitch-bottom 1.2s infinite;
+  clip-path: polygon(0 67%, 100% 67%, 100% 100%, 0 100%);
+}
+
+@keyframes glitch {
+  0%, 90%, 100% { transform: none; }
+  91% { transform: skew(-0.5deg); }
+  93% { transform: skew(0.3deg); }
+}
+
+@keyframes glitch-top {
+  0%, 100% { transform: none; }
+  20% { transform: translate(-2px, 0); }
+  40% { transform: translate(2px, 0); }
+  60% { transform: translate(-1px, 0); }
+  80% { transform: translate(1px, 0); }
+}
+
+@keyframes glitch-bottom {
+  0%, 100% { transform: none; }
+  25% { transform: translate(2px, 0); }
+  50% { transform: translate(-2px, 0); }
+  75% { transform: translate(1px, 0); }
+}
+
+.sub {
+  font-size: clamp(0.7rem, 2.5vw, 1.1rem);
+  letter-spacing: 0.4em;
+  margin-top: 1.5rem;
+  color: #ff006e;
+  opacity: 0.85;
+}
+
+.code {
+  font-size: clamp(0.6rem, 2vw, 0.85rem);
+  letter-spacing: 0.15em;
+  margin-top: 0.75rem;
+  color: #4a4a5a;
+}
+
+.terminal {
+  margin-top: 3rem;
+  font-size: 0.9rem;
+  color: #00f5ff;
+  opacity: 0.6;
+}
+
+.prompt {
+  color: #00f5ff;
+}
+
+.blink {
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}

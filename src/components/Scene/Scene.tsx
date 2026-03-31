@@ -44,6 +44,7 @@ export default function BabylonScene({
   const targetZRef = useRef(0);
   const currentZRef = useRef(0);
   const isReadyRef = useRef(false);
+  const audioRef = useRef<{ ctx: AudioContext; gain: GainNode; lfo: OscillatorNode; drone: OscillatorNode } | null>(null);
 
   const handleWheel = useCallback((e: WheelEvent) => {
     e.preventDefault();
@@ -193,12 +194,56 @@ export default function BabylonScene({
     isReadyRef.current = true;
     setTimeout(() => onReady(), 100);
 
+    // Ambient sound — low cyberpunk drone
+    const startAudio = () => {
+      try {
+        const ctx = new AudioContext();
+        const drone = ctx.createOscillator();
+        const lfo = ctx.createOscillator();
+        const lfoGain = ctx.createGain();
+        const filter = ctx.createBiquadFilter();
+        const masterGain = ctx.createGain();
+
+        drone.type = "sawtooth";
+        drone.frequency.value = 55;
+        lfo.type = "sine";
+        lfo.frequency.value = 0.15;
+        lfoGain.gain.value = 8;
+        filter.type = "lowpass";
+        filter.frequency.value = 280;
+        masterGain.gain.value = 0.04;
+
+        lfo.connect(lfoGain);
+        lfoGain.connect(drone.frequency);
+        drone.connect(filter);
+        filter.connect(masterGain);
+        masterGain.connect(ctx.destination);
+
+        drone.start();
+        lfo.start();
+        audioRef.current = { ctx, gain: masterGain, lfo, drone };
+      } catch {
+        // Audio blocked — silently skip
+      }
+    };
+
+    canvas.addEventListener("pointerdown", startAudio, { once: true });
+
     return () => {
       canvas.removeEventListener("wheel", handleWheel);
+      canvas.removeEventListener("pointerdown", startAudio);
       window.removeEventListener("resize", handleResize);
       engine.stopRenderLoop();
       scene.dispose();
       engine.dispose();
+      if (audioRef.current) {
+        try {
+          audioRef.current.drone.stop();
+          audioRef.current.lfo.stop();
+          audioRef.current.ctx.close();
+        } catch { /* already gone */ }
+        audioRef.current = null;
+      }
     };
   }, [handleWheel, handleClick, onNodeClick, onCameraZChange, onReady]);
 

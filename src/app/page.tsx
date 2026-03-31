@@ -6,6 +6,8 @@ import Header from "@/components/UI/Header";
 import Terminal from "@/components/Terminal/Terminal";
 import CoordinatesHUD from "@/components/UI/CoordinatesHUD";
 import ScanlineOverlay from "@/components/UI/ScanlineOverlay";
+import UnauthorizedOverlay from "@/components/UI/UnauthorizedOverlay";
+import { useDeviceDetect } from "@/components/UI/useDeviceDetect";
 import styles from "./page.module.css";
 
 // Dynamic import for Babylon scene (client-only, no SSR)
@@ -34,6 +36,7 @@ export default function HomePage() {
   const [selectedNode, setSelectedNode] = useState<NodeData | null>(null);
   const [cameraZ, setCameraZ] = useState(0);
   const [sceneReady, setSceneReady] = useState(false);
+  const { isMobile } = useDeviceDetect();
 
   const handleNodeClick = useCallback((data: NodeData) => {
     setSelectedNode(data);
@@ -50,6 +53,9 @@ export default function HomePage() {
 
   return (
     <main className={styles.main}>
+      {/* Mobile: block access */}
+      {isMobile && <UnauthorizedOverlay />}
+
       {/* 3D Canvas */}
       <div className={styles.canvasWrapper}>
         <Scene
