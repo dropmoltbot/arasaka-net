@@ -59,6 +59,28 @@ export default function BabylonScene({
     filter: BiquadFilterNode;
   } | null>(null);
 
+  // ─── Terminal event listeners ─────────────────────────────────────────────────
+  useEffect(() => {
+    const handleNodeHacked = (e: Event) => {
+      const detail = (e as CustomEvent<{ nodeId: string }>).detail;
+      console.log('[Scene] Node hacked:', detail.nodeId);
+      cityGridRef.current?.triggerFullGlitch();
+    };
+
+    const handleProbeStarted = () => {
+      console.log('[Scene] Probe started — flashing all nodes');
+      // Flash effect handled by cityGrid — just log for now
+    };
+
+    window.addEventListener('node-hacked', handleNodeHacked);
+    window.addEventListener('probe-started', handleProbeStarted);
+
+    return () => {
+      window.removeEventListener('node-hacked', handleNodeHacked);
+      window.removeEventListener('probe-started', handleProbeStarted);
+    };
+  }, []);
+
   // ─── Wheel scroll ─────────────────────────────────────────────────────────
 
   const handleWheel = useCallback((e: WheelEvent) => {

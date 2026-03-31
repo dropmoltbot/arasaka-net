@@ -51,6 +51,16 @@ export default function HomePage() {
     setSceneReady(true);
   }, []);
 
+  // Scene event listeners for terminal actions
+  const handleHackSuccess = useCallback(() => {
+    // Terminal handles window dispatchEvent('node-hacked', ...)
+    // Scene listens and triggers effects
+  }, []);
+
+  const handleProbeStart = useCallback(() => {
+    // Terminal dispatches probe-started
+  }, []);
+
   return (
     <main className={styles.main}>
       {/* Mobile: block access */}
@@ -73,6 +83,8 @@ export default function HomePage() {
         isOpen={terminalOpen}
         nodeData={selectedNode}
         onClose={handleCloseTerminal}
+        onHackSuccess={handleHackSuccess}
+        onProbeStart={handleProbeStart}
       />
 
       {/* Scroll hint */}
